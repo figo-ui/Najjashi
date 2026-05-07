@@ -27,8 +27,8 @@ function App() {
   if (!isReady) {
     return (
       <View style={{ flex: 1, backgroundColor: '#0a0f0d', alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: '#fbbf24', fontSize: 32, fontWeight: 'bold', marginBottom: 8 }}>أنا مسلم</Text>
-        <Text style={{ color: '#10b981', fontSize: 18, marginBottom: 24 }}>I Am Muslim</Text>
+        <Text style={{ color: '#fbbf24', fontSize: 32, fontWeight: 'bold', marginBottom: 8 }}>نجاشي</Text>
+        <Text style={{ color: '#10b981', fontSize: 18, marginBottom: 24 }}>Najjashi</Text>
         <ActivityIndicator color="#10b981" size="large" />
       </View>
     );

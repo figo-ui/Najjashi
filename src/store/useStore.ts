@@ -69,7 +69,7 @@ interface AppState {
   setHasHydrated: (v: boolean) => void;
 }
 
-const PERSIST_KEY = 'iammuslim-store';
+const PERSIST_KEY = 'najjashi-store';
 
 const persistState = async (state: Partial<AppState>) => {
   try {

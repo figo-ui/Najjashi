@@ -83,8 +83,8 @@ export function SettingsScreen() {
 
         {/* App info */}
         <View style={{ marginTop: 32, alignItems: 'center' }}>
-          <Text style={{ color: '#fbbf24', fontSize: 18, fontWeight: 'bold' }}>أنا مسلم</Text>
-          <Text style={{ color: '#10b981', fontSize: 14, marginTop: 2 }}>I Am Muslim v1.0.0</Text>
+          <Text style={{ color: '#fbbf24', fontSize: 18, fontWeight: 'bold' }}>نجاشي</Text>
+          <Text style={{ color: '#10b981', fontSize: 14, marginTop: 2 }}>Najjashi v1.0.0</Text>
         </View>
       </ScrollView>
     </ScreenWrapper>

@@ -34,8 +34,8 @@ export function OnboardingScreen() {
       <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={{ alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 }}>
-          <Text style={{ color: '#fbbf24', fontSize: 42, fontWeight: 'bold' }}>أنا مسلم</Text>
-          <Text style={{ color: '#10b981', fontSize: 20, fontWeight: '600', marginTop: 4 }}>I Am Muslim</Text>
+          <Text style={{ color: '#fbbf24', fontSize: 42, fontWeight: 'bold' }}>نجاشي</Text>
+          <Text style={{ color: '#10b981', fontSize: 20, fontWeight: '600', marginTop: 4 }}>Najjashi</Text>
           <Text style={{ color: 'rgba(167,196,176,0.6)', fontSize: 14, textAlign: 'center', marginTop: 8, paddingHorizontal: 16 }}>
             {t('onboarding_subtitle')}
           </Text>
