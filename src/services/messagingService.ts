@@ -32,8 +32,9 @@ export async function checkNotificationPermission(): Promise<boolean> {
 
 export async function getFCMToken(): Promise<string | null> {
   try {
+    // On iOS, need to register for remote notifications
     if (Platform.OS === 'ios') {
-      await messaging().registerForRemoteNotifications();
+      // iOS registration is handled automatically by RN Firebase messaging
     }
     return await messaging().getToken();
   } catch (e) {

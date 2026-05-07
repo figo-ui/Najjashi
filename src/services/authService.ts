@@ -13,7 +13,12 @@ export function configureGoogleSignIn(webClientId: string) {
 export async function signInWithGoogle(): Promise<UserProfile | null> {
   try {
     await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    const { idToken } = await GoogleSignin.signIn();
+    const signInResult = await GoogleSignin.signIn();
+    const idToken = signInResult.data?.idToken;
+    if (!idToken) {
+      console.warn('Google sign-in: no idToken returned');
+      return null;
+    }
     const credential = auth.GoogleAuthProvider.credential(idToken);
     const result = await auth().signInWithCredential(credential);
     return mapFirebaseUser(result.user, 'google');
@@ -60,9 +65,12 @@ export async function signInAsGuest(): Promise<UserProfile | null> {
 export async function signOut(): Promise<void> {
   try {
     await auth().signOut();
-    if (await GoogleSignin.isSignedIn()) {
-      await GoogleSignin.signOut();
-    }
+    try {
+      const currentUser = GoogleSignin.getCurrentUser();
+      if (currentUser) {
+        await GoogleSignin.signOut();
+      }
+    } catch (_) {}
   } catch (e) {
     console.warn('Sign out failed:', e);
   }

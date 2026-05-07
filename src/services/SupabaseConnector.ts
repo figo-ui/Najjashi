@@ -1,8 +1,5 @@
-import type { RealtimeChannel } from '@supabase/supabase-js';
-import type { SupabaseConnector } from './SupabaseConnector';
-
 export class SupabaseConnector {
-  private channel: RealtimeChannel | null = null;
+  private channel: any = null;
 
   constructor(private supabase: any) {}
 
