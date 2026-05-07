@@ -6,6 +6,7 @@ import { ScreenWrapper } from '../components/shared';
 import { getPrayerTimes } from '../services/prayerTimes';
 import { gregorianToHijri, formatHijriDate } from '../services/hijriCalendar';
 import { getAdhkarByTime, getSahabaLessons } from '../services/localData';
+import { buildRecommendationContext, generateRecommendations } from '../services/aiRecommendations';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 interface HomeScreenProps {
@@ -14,7 +15,7 @@ interface HomeScreenProps {
 
 export function HomeScreen({ navigation }: HomeScreenProps) {
   const { t } = useTranslation();
-  const { salahLog, preferences, recommendations, sahabaLessons, currentLessonIndex } = useStore();
+  const { salahLog, preferences, recommendations, setRecommendations, sahabaLessons, currentLessonIndex, adhkarTime, zikrList, tasbihSessions } = useStore();
   const times = useMemo(() => getPrayerTimes(), []);
   const hijri = useMemo(() => gregorianToHijri(new Date()), []);
 
@@ -34,6 +35,24 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
   const lessons = sahabaLessons.length > 0 ? sahabaLessons : getSahabaLessons();
   const nextLesson = lessons[currentLessonIndex] || lessons[0];
+
+  // AI Recommendations
+  const aiRecs = useMemo(() => {
+    const ctx = buildRecommendationContext({
+      salahLog,
+      adhkarTime,
+      sahabaLessons: lessons,
+      currentLessonIndex,
+      tasbihSessions,
+      zikrList,
+    });
+    return generateRecommendations(ctx);
+  }, [salahLog, adhkarTime, lessons, currentLessonIndex, tasbihSessions, zikrList]);
+
+  // Keep store in sync
+  React.useEffect(() => {
+    if (aiRecs.length > 0) setRecommendations(aiRecs);
+  }, [aiRecs]);
 
   return (
     <ScreenWrapper title="نجاشي">
@@ -104,6 +123,33 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: 'bold' }}>سُبْحَانَ اللَّهِ</Text>
           </View>
         </Pressable>
+
+        {/* AI Recommendations */}
+        {aiRecs.length > 0 && (
+          <View style={{ marginBottom: 12 }}>
+            <Text style={{ color: 'rgba(16,185,129,0.6)', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
+              {t('recommended')}
+            </Text>
+            {aiRecs.slice(0, 3).map((rec) => {
+              const icon = rec.type === 'adhkar' ? '📿' : rec.type === 'sahaba' ? '📖' : '✋';
+              const target = rec.type === 'adhkar' ? 'Adhkar' : rec.type === 'sahaba' ? 'Sahaba' : 'Tasbih';
+              return (
+                <Pressable
+                  key={rec.id}
+                  onPress={() => (navigation as any).navigate(target)}
+                  style={{ backgroundColor: 'rgba(6,78,59,0.3)', borderWidth: 1, borderColor: 'rgba(6,78,59,0.3)', borderRadius: 14, padding: 14, marginBottom: 8 }}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ color: '#e8f5e9', fontSize: 14, fontWeight: '600' }}>{icon} {rec.title}</Text>
+                      <Text style={{ color: 'rgba(167,196,176,0.5)', fontSize: 11, marginTop: 2 }}>{rec.reason}</Text>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
         {/* Settings */}
         <Pressable onPress={() => (navigation as any).navigate('Settings')}>

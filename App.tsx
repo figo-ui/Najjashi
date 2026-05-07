@@ -4,6 +4,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { hydrateStore } from './src/store/useStore';
+import { initializeFirebase } from './src/services/firebase';
+import { onAuthStateChanged } from './src/services/authService';
+import { configureGoogleSignIn } from './src/services/authService';
+import { ENV } from './src/config/env';
 import './src/services/i18n';
 import './src/styles/global.css';
 
@@ -12,16 +16,46 @@ function App() {
 
   useEffect(() => {
     async function bootstrap() {
+      // 1. Hydrate local store
       try {
         await hydrateStore();
       } catch (e) {
         console.warn('Store hydration skipped:', e);
       }
-      // Firebase init will be added here when @react-native-firebase/app is configured
-      // try { await firebaseApp.initializeApp(firebaseConfig); } catch(e) {}
+
+      // 2. Initialize Firebase
+      try {
+        const fbReady = await initializeFirebase();
+        if (fbReady) {
+          // Configure Google Sign-In with Firebase web client ID
+          if (ENV.FIREBASE_MESSAGING_SENDER_ID) {
+            configureGoogleSignIn(ENV.FIREBASE_MESSAGING_SENDER_ID);
+          }
+        }
+      } catch (e) {
+        console.warn('Firebase init skipped:', e);
+      }
+
       setIsReady(true);
     }
     bootstrap();
+
+    // 3. Listen for auth state changes
+    let unsubscribe: (() => void) | undefined;
+    try {
+      const { useStore } = require('./src/store/useStore');
+      unsubscribe = onAuthStateChanged((user) => {
+        if (user) {
+          useStore.getState().setUser(user);
+        }
+      });
+    } catch (e) {
+      // Firebase not available yet
+    }
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   if (!isReady) {
