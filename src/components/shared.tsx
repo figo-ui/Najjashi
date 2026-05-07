@@ -13,10 +13,10 @@ export function SectionCard({ title, subtitle, onPress }: SectionCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      className="bg-emerald-900/40 border border-emerald-800/50 rounded-2xl p-4 mb-3 active:bg-emerald-800/60"
+      style={{ backgroundColor: 'rgba(6,78,59,0.4)', borderWidth: 1, borderColor: 'rgba(6,78,59,0.5)', borderRadius: 18, padding: 16, marginBottom: 10 }}
     >
-      <Text className="text-emerald-100 text-base font-semibold">{title}</Text>
-      {subtitle && <Text className="text-emerald-400/70 text-sm mt-1">{subtitle}</Text>}
+      <Text style={{ color: '#e8f5e9', fontSize: 16, fontWeight: '600' }}>{title}</Text>
+      {subtitle && <Text style={{ color: 'rgba(16,185,129,0.7)', fontSize: 13, marginTop: 4 }}>{subtitle}</Text>}
     </Pressable>
   );
 }
@@ -28,13 +28,13 @@ interface ScreenWrapperProps {
 
 export function ScreenWrapper({ children, title }: ScreenWrapperProps) {
   return (
-    <View className="flex-1 bg-[#0a0f0d]">
+    <View style={{ flex: 1, backgroundColor: '#0a0f0d' }}>
       {title && (
-        <View className="px-5 pt-4 pb-2">
-          <Text className="text-emerald-100 text-xl font-bold">{title}</Text>
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
+          <Text style={{ color: '#e8f5e9', fontSize: 20, fontWeight: 'bold' }}>{title}</Text>
         </View>
       )}
-      <View className="flex-1 px-4">{children}</View>
+      <View style={{ flex: 1, paddingHorizontal: 16 }}>{children}</View>
     </View>
   );
 }

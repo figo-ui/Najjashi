@@ -42,7 +42,7 @@ export function SahabaScreen() {
           <Text style={{ color: '#e8f5e9', fontSize: 16, fontWeight: '600', marginTop: 4, textAlign: 'center' }}>{current.characterName} (RA)</Text>
           <View style={{ flexDirection: 'row', marginTop: 12, alignItems: 'center' }}>
             <View style={{ height: 4, backgroundColor: 'rgba(16,185,129,0.2)', borderRadius: 2, width: 200 }}>
-              <View style={{ height: 4, backgroundColor: '#10b981', borderRadius: 2, width: progressPercent }} />
+              <View style={{ height: 4, backgroundColor: '#10b981', borderRadius: 2, width: (progressPercent / 100) * 200 }} />
             </View>
             <Text style={{ color: 'rgba(167,196,176,0.6)', fontSize: 12, marginLeft: 8 }}>{completedCount}/{lessons.length}</Text>
           </View>

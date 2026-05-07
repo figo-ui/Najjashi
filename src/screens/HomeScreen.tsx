@@ -36,7 +36,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   const nextLesson = lessons[currentLessonIndex] || lessons[0];
 
   return (
-    <ScreenWrapper title="أنا مسلم">
+    <ScreenWrapper title="نجاشي">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Prayer Card */}
         <Pressable onPress={() => (navigation as any).navigate('Prayer')}>
@@ -57,7 +57,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             </View>
             {/* Progress bar */}
             <View style={{ marginTop: 12, height: 4, backgroundColor: 'rgba(16,185,129,0.2)', borderRadius: 2 }}>
-              <View style={{ height: 4, backgroundColor: '#10b981', borderRadius: 2, width: `${(completedCount / 5) * 100}%` as any }} />
+              <View style={{ height: 4, backgroundColor: '#10b981', borderRadius: 2, width: (completedCount / 5) * 280 }} />
             </View>
           </View>
         </Pressable>

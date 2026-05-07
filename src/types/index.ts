@@ -16,7 +16,8 @@ export interface UserProfile {
 }
 
 // ─── Prayer ───
-export interface PrayerTimeInfo {
+export interface PrayerTime {
+  id: string;
   name: string;
   nameAr: string;
   time: string;
@@ -100,6 +101,16 @@ export type AppSection =
   | 'tasbih'
   | 'sahaba'
   | 'settings';
+
+// ─── Hijri Date ───
+export interface HijriDate {
+  day: number;
+  month: number;
+  year: number;
+  monthName: string;
+  monthNameAr: string;
+  gregorianDate: string;
+}
 
 // ─── User Preferences ───
 export interface UserPreferences {
