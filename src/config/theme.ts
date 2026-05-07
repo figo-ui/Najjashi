@@ -1,0 +1,73 @@
+export const Colors = {
+  dark: {
+    primary: '#047857',
+    primaryLight: '#059669',
+    primaryDark: '#064e3b',
+    accent: '#fbbf24',
+    accentMuted: '#d4a017',
+    background: '#0a0f0d',
+    surface: '#0f1a16',
+    surfaceElevated: '#142420',
+    card: '#1a2f28',
+    border: '#1e3a30',
+    text: '#e8f5e9',
+    textSecondary: '#a7c4b0',
+    textMuted: '#6b8f7a',
+    ivory: '#faf3e0',
+    gold: '#fbbf24',
+    goldDark: '#b8860b',
+    charcoal: '#1a1a1a',
+    error: '#ef4444',
+    success: '#22c55e',
+  },
+  light: {
+    primary: '#059669',
+    primaryLight: '#10b981',
+    primaryDark: '#047857',
+    accent: '#d97706',
+    accentMuted: '#b45309',
+    background: '#f0fdf4',
+    surface: '#ffffff',
+    surfaceElevated: '#f7fef9',
+    card: '#ecfdf5',
+    border: '#d1fae5',
+    text: '#022c22',
+    textSecondary: '#065f46',
+    textMuted: '#6b7280',
+    ivory: '#fefce8',
+    gold: '#d97706',
+    goldDark: '#92400e',
+    charcoal: '#1f2937',
+    error: '#dc2626',
+    success: '#16a34a',
+  },
+};
+
+export const Spacing = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
+
+export const Radius = {
+  sm: 8,
+  md: 12,
+  lg: 16,
+  xl: 20,
+  full: 9999,
+};
+
+export const FontSizes = {
+  xs: 10,
+  sm: 12,
+  md: 14,
+  lg: 16,
+  xl: 18,
+  xxl: 22,
+  xxxl: 28,
+  arabic: 24,
+  arabicLarge: 32,
+};
