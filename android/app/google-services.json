@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "285791275223",
+    "project_id": "nejjashi-a1406",
+    "storage_bucket": "nejjashi-a1406.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:285791275223:android:2842f93d7acbb84e14c892",
+        "android_client_info": {
+          "package_name": "com.omx.nejjashi"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ4amvE6Ou5SEr17G5MvcwbNByaEhoEDM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

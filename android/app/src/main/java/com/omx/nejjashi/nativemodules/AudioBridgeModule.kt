@@ -1,4 +1,4 @@
-package com.salahapp.nativemodules
+package com.omx.nejjashi.nativemodules
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule

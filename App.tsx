@@ -7,6 +7,10 @@ import { hydrateStore } from './src/store/useStore';
 import { initializeFirebase } from './src/services/firebase';
 import { onAuthStateChanged } from './src/services/authService';
 import { configureGoogleSignIn } from './src/services/authService';
+import { initCrashlytics, setCrashlyticsUser, clearCrashlyticsUser } from './src/services/crashlyticsService';
+import { initRemoteConfig } from './src/services/remoteConfigService';
+import { loadVoskModel } from './src/services/recognitionService';
+import { aiEngine } from './src/services/aiEngine';
 import { ENV } from './src/config/env';
 import './src/services/i18n';
 import './src/styles/global.css';
@@ -31,9 +35,34 @@ function App() {
           if (ENV.FIREBASE_MESSAGING_SENDER_ID) {
             configureGoogleSignIn(ENV.FIREBASE_MESSAGING_SENDER_ID);
           }
+          // Initialize Crashlytics
+          await initCrashlytics();
+          // Initialize Remote Config
+          await initRemoteConfig();
         }
       } catch (e) {
         console.warn('Firebase init skipped:', e);
+      }
+
+      // 3. Load Vosk Arabic model (offline speech recognition)
+      try {
+        const voskReady = await loadVoskModel();
+        if (voskReady) {
+          console.log('Vosk Arabic model loaded');
+        }
+      } catch (e) {
+        console.warn('Vosk model not loaded — will use fallback:', e);
+      }
+
+      // 4. Initialize AI engine (on-device learning)
+      try {
+        await aiEngine.initialize();
+        // Sync AI profile to store
+        const { useStore } = require('./src/store/useStore');
+        useStore.getState().syncAIPersonalization();
+        console.log('AI engine initialized — level', aiEngine.getSpiritualInfo().level);
+      } catch (e) {
+        console.warn('AI engine init skipped:', e);
       }
 
       setIsReady(true);
@@ -47,6 +76,9 @@ function App() {
       unsubscribe = onAuthStateChanged((user) => {
         if (user) {
           useStore.getState().setUser(user);
+          setCrashlyticsUser(user.uid, user.email, user.authMethod);
+        } else {
+          clearCrashlyticsUser();
         }
       });
     } catch (e) {

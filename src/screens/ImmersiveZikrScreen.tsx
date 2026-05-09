@@ -3,6 +3,8 @@ import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { useNavigation } from '@react-navigation/native';
+import { trainOnAdhkarSession } from '../services/aiRecommendations';
 
 export function ImmersiveZikrScreen() {
   const { t } = useTranslation();
@@ -12,6 +14,8 @@ export function ImmersiveZikrScreen() {
 
   const isComplete = immersiveCount >= immersiveZikr.count;
 
+  const navigation = useNavigation();
+
   const handleTap = () => {
     if (immersiveCount < immersiveZikr.count) {
       if (preferences.hapticEnabled) {
@@ -19,9 +23,7 @@ export function ImmersiveZikrScreen() {
       }
       const nextCount = immersiveCount + 1;
       setImmersiveCount(nextCount);
-      if (nextCount >= immersiveZikr.count) {
-        incrementZikr(immersiveZikr.id);
-      }
+      incrementZikr(immersiveZikr.id);
     }
   };
 
@@ -42,12 +44,27 @@ export function ImmersiveZikrScreen() {
       {isComplete && (
         <Text style={{ color: '#10b981', fontSize: 14, marginTop: 8 }}>✓ {t('completed')}</Text>
       )}
-      <Pressable
-        style={{ marginTop: 40, backgroundColor: 'rgba(6,78,59,0.5)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
-        onPress={() => setImmersiveZikr(null)}
-      >
-        <Text style={{ color: 'rgba(167,196,176,0.7)', fontSize: 14 }}>{t('reset')}</Text>
-      </Pressable>
+      <View style={{ flexDirection: 'row', marginTop: 40, gap: 12 }}>
+        <Pressable
+          style={{ backgroundColor: 'rgba(6,78,59,0.5)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
+          onPress={() => {
+            // Train AI on adhkar session before leaving
+            if (immersiveZikr) {
+              trainOnAdhkarSession(immersiveZikr.category, immersiveCount, immersiveZikr.count, immersiveCount * 3);
+            }
+            setImmersiveZikr(null);
+            navigation.goBack();
+          }}
+        >
+          <Text style={{ color: '#e8f5e9', fontSize: 14 }}>{t('back')}</Text>
+        </Pressable>
+        <Pressable
+          style={{ backgroundColor: 'rgba(6,78,59,0.5)', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
+          onPress={() => setImmersiveCount(0)}
+        >
+          <Text style={{ color: 'rgba(167,196,176,0.7)', fontSize: 14 }}>{t('reset')}</Text>
+        </Pressable>
+      </View>
     </Pressable>
   );
 }

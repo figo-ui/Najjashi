@@ -1,0 +1,83 @@
+{
+  "conditions": [],
+  "parameters": {
+    "enable_ai_recommendations": {
+      "defaultValue": { "value": "true" },
+      "description": "Enable AI-powered personalized recommendations on home screen"
+    },
+    "enable_recitation_coach": {
+      "defaultValue": { "value": "true" },
+      "description": "Enable on-device recitation coaching with speech recognition"
+    },
+    "enable_focus_mode": {
+      "defaultValue": { "value": "true" },
+      "description": "Enable focus mode that blocks distracting apps during worship"
+    },
+    "enable_community_leaderboard": {
+      "defaultValue": { "value": "false" },
+      "description": "Enable anonymous community leaderboard (spiritual level rankings)"
+    },
+    "enable_streak_celebrations": {
+      "defaultValue": { "value": "true" },
+      "description": "Show celebration animations when prayer streaks are achieved"
+    },
+    "enable_night_mode_auto": {
+      "defaultValue": { "value": "true" },
+      "description": "Automatically switch to dark mode during Isha time"
+    },
+    "ai_ema_alpha": {
+      "defaultValue": { "value": "0.3" },
+      "description": "Exponential Moving Average smoothing factor (0.1-0.5)"
+    },
+    "ai_max_recommendations": {
+      "defaultValue": { "value": "7" },
+      "description": "Maximum number of AI recommendations shown at once"
+    },
+    "prayer_reminder_minutes_before": {
+      "defaultValue": { "value": "15" },
+      "description": "Minutes before prayer time to send reminder notification"
+    },
+    "prayer_reminder_enabled": {
+      "defaultValue": { "value": "true" },
+      "description": "Enable scheduled prayer time push notifications"
+    },
+    "adhkar_reminder_enabled": {
+      "defaultValue": { "value": "true" },
+      "description": "Enable morning/evening/sleep adhkar reminder notifications"
+    },
+    "weekly_report_enabled": {
+      "defaultValue": { "value": "true" },
+      "description": "Enable weekly worship summary report via push notification"
+    },
+    "max_tasbih_target": {
+      "defaultValue": { "value": "1000" },
+      "description": "Maximum allowed tasbih count target"
+    },
+    "default_tasbih_target": {
+      "defaultValue": { "value": "33" },
+      "description": "Default tasbih count target for new users"
+    },
+    "show_onboarding_tips": {
+      "defaultValue": { "value": "true" },
+      "description": "Show onboarding tooltips for first-time users"
+    },
+    "islamic_api_timeout_ms": {
+      "defaultValue": { "value": "10000" },
+      "description": "Timeout in milliseconds for Islamic API calls"
+    },
+    "quran_audio_quality": {
+      "defaultValue": { "value": "medium" },
+      "description": "Audio quality for Quran recitation streaming: low, medium, high"
+    }
+  },
+  "parameterGroups": {},
+  "version": {
+    "versionNumber": 1,
+    "updateTime": "2026-05-09T00:00:00Z",
+    "updateUser": {
+      "email": "obsafigo@gmail.com"
+    },
+    "updateOrigin": "REST_API",
+    "updateType": "INCREMENTAL_UPDATE"
+  }
+}

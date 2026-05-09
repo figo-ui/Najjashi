@@ -1,4 +1,4 @@
-package com.salahapp
+package com.omx.nejjashi
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -6,7 +6,8 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-import com.salahapp.nativemodules.AudioBridgePackage
+import com.omx.nejjashi.nativemodules.AudioBridgePackage
+import com.omx.nejjashi.nativemodules.FocusModePackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -16,6 +17,7 @@ class MainApplication : Application(), ReactApplication {
       packageList =
         PackageList(this).packages.apply {
           add(AudioBridgePackage())
+          add(FocusModePackage())
         },
     )
   }

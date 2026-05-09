@@ -12,7 +12,29 @@ import type {
   TasbihSession,
   AuthMethod,
   UserProfile,
+  FocusModeSettings,
+  FocusModeSession,
+  FocusModePhase,
+  AdhkarStreak,
+  AIPersonalization,
+  RecitationState,
+  BlockedApp,
+  HadithItem,
+  DailyHadithItem,
+  QuranAyahItem,
+  HisnulDuaItem,
+  DuaCategoryItem,
+  VoskRecognitionState,
 } from '../types';
+import {
+  DEFAULT_FOCUS_SETTINGS,
+  DEFAULT_STREAK,
+  DEFAULT_PERSONALIZATION,
+  createFocusSession,
+  completeFocusSession,
+  updateStreak,
+  updatePersonalization,
+} from '../services/focusModeService';
 
 interface AppState {
   // Auth
@@ -64,6 +86,52 @@ interface AppState {
   recommendations: AIRecommendation[];
   setRecommendations: (recs: AIRecommendation[]) => void;
 
+  // Hadith (sunnah.com API)
+  dailyHadith: DailyHadithItem | null;
+  setDailyHadith: (h: DailyHadithItem | null) => void;
+  hadithBookmarks: HadithItem[];
+  toggleHadithBookmark: (h: HadithItem) => void;
+  adhkarHadiths: HadithItem[];
+  setAdhkarHadiths: (h: HadithItem[]) => void;
+
+  // Quran (alquran.cloud API)
+  dailyAyah: QuranAyahItem | null;
+  setDailyAyah: (a: QuranAyahItem | null) => void;
+  quranBookmarks: QuranAyahItem[];
+  toggleQuranBookmark: (a: QuranAyahItem) => void;
+
+  // Duas (duas.muslim-api.com)
+  duaCategories: DuaCategoryItem[];
+  setDuaCategories: (c: DuaCategoryItem[]) => void;
+  hisnulDuas: HisnulDuaItem[];
+  setHisnulDuas: (d: HisnulDuaItem[]) => void;
+  duaFavorites: HisnulDuaItem[];
+  toggleDuaFavorite: (d: HisnulDuaItem) => void;
+
+  // Vosk Speech Recognition
+  voskState: VoskRecognitionState;
+  setVoskState: (s: Partial<VoskRecognitionState>) => void;
+
+  // Spiritual Focus Mode
+  focusSettings: FocusModeSettings;
+  setFocusSettings: (s: Partial<FocusModeSettings>) => void;
+  focusPhase: FocusModePhase;
+  setFocusPhase: (p: FocusModePhase) => void;
+  focusSession: FocusModeSession | null;
+  startFocusSession: (type: 'morning' | 'evening', adhkarTotal: number) => void;
+  completeFocusSession: (engagementScore: number) => void;
+  adhkarStreak: AdhkarStreak;
+  recordAdhkarCompletion: (type: 'morning' | 'evening') => void;
+  aiPersonalization: AIPersonalization;
+  updateAIPersonalization: (strugglingIds: string[]) => void;
+  syncAIPersonalization: () => void;
+  recitationState: RecitationState | null;
+  setRecitationState: (s: RecitationState | null) => void;
+  guidedAdhkarIndex: number;
+  setGuidedAdhkarIndex: (i: number) => void;
+  focusBypassUsed: boolean;
+  setFocusBypassUsed: (v: boolean) => void;
+
   // Hydration
   _hasHydrated: boolean;
   setHasHydrated: (v: boolean) => void;
@@ -82,6 +150,12 @@ const persistState = async (state: Partial<AppState>) => {
       tasbihSessions: state.tasbihSessions,
       sahabaLessons: state.sahabaLessons,
       currentLessonIndex: state.currentLessonIndex,
+      focusSettings: state.focusSettings,
+      adhkarStreak: state.adhkarStreak,
+      aiPersonalization: state.aiPersonalization,
+      hadithBookmarks: state.hadithBookmarks,
+      quranBookmarks: state.quranBookmarks,
+      duaFavorites: state.duaFavorites,
     };
     await AsyncStorage.setItem(PERSIST_KEY, JSON.stringify(toSave));
   } catch (e) {
@@ -202,6 +276,115 @@ export const useStore = create<AppState>((set) => ({
   recommendations: [],
   setRecommendations: (recs) => set({ recommendations: recs }),
 
+  // Hadith
+  dailyHadith: null,
+  setDailyHadith: (h) => set({ dailyHadith: h }),
+  hadithBookmarks: [],
+  toggleHadithBookmark: (h) =>
+    set((state) => {
+      const exists = state.hadithBookmarks.some(b => b.id === h.id);
+      const next = {
+        hadithBookmarks: exists
+          ? state.hadithBookmarks.filter(b => b.id !== h.id)
+          : [...state.hadithBookmarks, h],
+      };
+      persistState({ ...state, ...next });
+      return next;
+    }),
+  adhkarHadiths: [],
+  setAdhkarHadiths: (h) => set({ adhkarHadiths: h }),
+
+  // Quran
+  dailyAyah: null,
+  setDailyAyah: (a) => set({ dailyAyah: a }),
+  quranBookmarks: [],
+  toggleQuranBookmark: (a) =>
+    set((state) => {
+      const exists = state.quranBookmarks.some(b => b.id === a.id);
+      const next = {
+        quranBookmarks: exists
+          ? state.quranBookmarks.filter(b => b.id !== a.id)
+          : [...state.quranBookmarks, a],
+      };
+      persistState({ ...state, ...next });
+      return next;
+    }),
+
+  // Duas
+  duaCategories: [],
+  setDuaCategories: (c) => set({ duaCategories: c }),
+  hisnulDuas: [],
+  setHisnulDuas: (d) => set({ hisnulDuas: d }),
+  duaFavorites: [],
+  toggleDuaFavorite: (d) =>
+    set((state) => {
+      const exists = state.duaFavorites.some(f => f.id === d.id);
+      const next = {
+        duaFavorites: exists
+          ? state.duaFavorites.filter(f => f.id !== d.id)
+          : [...state.duaFavorites, d],
+      };
+      persistState({ ...state, ...next });
+      return next;
+    }),
+
+  // Vosk
+  voskState: { isAvailable: false, isModelLoaded: false, isListening: false, lastDetectedText: '', lastConfidence: 0, matchedZikr: null },
+  setVoskState: (s) => set((state) => ({ voskState: { ...state.voskState, ...s } })),
+
+  // Spiritual Focus Mode
+  focusSettings: { ...DEFAULT_FOCUS_SETTINGS },
+  setFocusSettings: (s) =>
+    set((state) => {
+      const next = { focusSettings: { ...state.focusSettings, ...s } };
+      persistState({ ...state, ...next });
+      return next;
+    }),
+  focusPhase: 'idle',
+  setFocusPhase: (p) => set({ focusPhase: p }),
+  focusSession: null,
+  startFocusSession: (type, adhkarTotal) =>
+    set((state) => {
+      const session = createFocusSession(type, adhkarTotal);
+      return { focusSession: session, focusPhase: 'active', guidedAdhkarIndex: 0, focusBypassUsed: false };
+    }),
+  completeFocusSession: (engagementScore) =>
+    set((state) => {
+      if (!state.focusSession) return {};
+      const completed = completeFocusSession(state.focusSession, engagementScore);
+      return { focusSession: completed, focusPhase: 'completed' };
+    }),
+  adhkarStreak: { ...DEFAULT_STREAK },
+  recordAdhkarCompletion: (type) =>
+    set((state) => {
+      const next = { adhkarStreak: updateStreak(state.adhkarStreak, type, Date.now()) };
+      persistState({ ...state, ...next });
+      return next;
+    }),
+  aiPersonalization: { ...DEFAULT_PERSONALIZATION },
+  updateAIPersonalization: (strugglingIds) =>
+    set((state) => {
+      if (!state.focusSession) return {};
+      const next = { aiPersonalization: updatePersonalization(state.aiPersonalization, state.focusSession, strugglingIds) };
+      persistState({ ...state, ...next });
+      return next;
+    }),
+  syncAIPersonalization: () =>
+    set((state) => {
+      try {
+        const { aiEngine } = require('../services/aiEngine') as typeof import('../services/aiEngine');
+        const next = { aiPersonalization: aiEngine.toLegacyPersonalization() };
+        persistState({ ...state, ...next });
+        return next;
+      } catch { return {}; }
+    }),
+  recitationState: null,
+  setRecitationState: (s) => set({ recitationState: s }),
+  guidedAdhkarIndex: 0,
+  setGuidedAdhkarIndex: (i) => set({ guidedAdhkarIndex: i }),
+  focusBypassUsed: false,
+  setFocusBypassUsed: (v) => set({ focusBypassUsed: v }),
+
   _hasHydrated: false,
   setHasHydrated: (v) => set({ _hasHydrated: v }),
 }));
@@ -221,6 +404,12 @@ export async function hydrateStore() {
       tasbihSessions: saved.tasbihSessions ?? state.tasbihSessions,
       sahabaLessons: saved.sahabaLessons ?? state.sahabaLessons,
       currentLessonIndex: saved.currentLessonIndex ?? state.currentLessonIndex,
+      focusSettings: saved.focusSettings ?? state.focusSettings,
+      adhkarStreak: saved.adhkarStreak ?? state.adhkarStreak,
+      aiPersonalization: saved.aiPersonalization ?? state.aiPersonalization,
+      hadithBookmarks: saved.hadithBookmarks ?? state.hadithBookmarks,
+      quranBookmarks: saved.quranBookmarks ?? state.quranBookmarks,
+      duaFavorites: saved.duaFavorites ?? state.duaFavorites,
       locale: saved.preferences?.locale ?? state.locale,
       _hasHydrated: true,
     });

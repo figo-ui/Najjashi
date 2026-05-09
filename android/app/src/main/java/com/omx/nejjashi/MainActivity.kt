@@ -1,4 +1,4 @@
-package com.salahapp
+package com.omx.nejjashi
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

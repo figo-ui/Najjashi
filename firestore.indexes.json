@@ -1,0 +1,61 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "prayerLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "prayerLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "date", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "sahabaProgress",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "lessonId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tasbihSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "completedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "weeklyReports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "uid", "order": "ASCENDING" },
+        { "fieldPath": "weekStarting", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "aiProfiles",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "consistencyScore", "order": "DESCENDING" },
+        { "fieldPath": "spiritualLevel", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "fcmTokens",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "notificationsEnabled", "order": "ASCENDING" },
+        { "fieldPath": "platform", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

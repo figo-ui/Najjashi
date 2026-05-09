@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useStore } from '../store/useStore';
-import { ScreenWrapper } from '../components/shared';
+import { ScreenWrapper, Badge, ProgressBar, SectionHeader } from '../components/shared';
+import { Colors, Spacing, Radius, Typography, Shadows, CardPresets, ButtonPresets } from '../theme';
 import { getSahabaLessons } from '../services/localData';
+import { Lightbulb } from 'lucide-react-native';
 
 export function SahabaScreen() {
   const { t } = useTranslation();
@@ -20,7 +22,7 @@ export function SahabaScreen() {
   }, []);
 
   const completedCount = lessons.filter(l => l.isComplete).length;
-  const progressPercent = (completedCount / lessons.length) * 100;
+  const progress = completedCount / lessons.length;
 
   const handleComplete = () => {
     markLessonComplete(current.id);
@@ -29,72 +31,215 @@ export function SahabaScreen() {
       setCurrentLessonIndex(nextIdx);
     }
     setRecommendations([
-      { id: 'rec-sahaba', type: 'sahaba', title: lessons[nextIdx]?.title || t('sahaba_complete'), reason: t('continue_learning'), contentId: lessons[nextIdx]?.id || '', priority: 1 },
+      { id: 'rec-sahaba', type: 'sahaba', title: lessons[nextIdx]?.title || t('sahaba_complete'), reason: t('continue_learning'), contentId: lessons[nextIdx]?.id || '', priority: 1, confidence: 0.8, reasoning: 'Next Sahaba lesson' },
     ]);
   };
 
   return (
-    <ScreenWrapper title={t('sahaba')}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        {/* Character Header */}
-        <View style={{ backgroundColor: 'rgba(6,78,59,0.5)', borderColor: 'rgba(6,78,59,0.4)', borderWidth: 1, borderRadius: 20, padding: 20, marginBottom: 16, alignItems: 'center' }}>
-          <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: 'bold', textAlign: 'center' }}>{current.characterNameAr}</Text>
-          <Text style={{ color: '#e8f5e9', fontSize: 16, fontWeight: '600', marginTop: 4, textAlign: 'center' }}>{current.characterName} (RA)</Text>
-          <View style={{ flexDirection: 'row', marginTop: 12, alignItems: 'center' }}>
-            <View style={{ height: 4, backgroundColor: 'rgba(16,185,129,0.2)', borderRadius: 2, width: 200 }}>
-              <View style={{ height: 4, backgroundColor: '#10b981', borderRadius: 2, width: (progressPercent / 100) * 200 }} />
-            </View>
-            <Text style={{ color: 'rgba(167,196,176,0.6)', fontSize: 12, marginLeft: 8 }}>{completedCount}/{lessons.length}</Text>
+    <ScreenWrapper title={t('sahaba')} subtitle="Stories of the Companions">
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* ─── Character Hero ─── */}
+        <View style={styles.characterHero}>
+          <View style={styles.characterGlow} />
+          <Text style={styles.characterArabic}>{current.characterNameAr}</Text>
+          <Text style={styles.characterName}>{current.characterName} (RA)</Text>
+          <View style={styles.characterProgressRow}>
+            <ProgressBar progress={progress} variant="gold" height={3} />
+            <Text style={styles.characterProgressLabel}>{completedCount}/{lessons.length}</Text>
           </View>
         </View>
 
-        {/* Lesson Card */}
-        <View style={{ backgroundColor: 'rgba(6,78,59,0.4)', borderColor: 'rgba(6,78,59,0.35)', borderWidth: 1, borderRadius: 20, padding: 20, marginBottom: 16 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ color: '#10b981', fontSize: 12, fontWeight: '600' }}>{t('lesson')} {current.lessonNumber}/{current.totalLessons}</Text>
-            {current.isComplete && (
-              <View style={{ backgroundColor: 'rgba(16,185,129,0.2)', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 }}>
-                <Text style={{ color: '#10b981', fontSize: 11 }}>✓ {t('completed')}</Text>
-              </View>
-            )}
+        {/* ─── Lesson Card ─── */}
+        <View style={styles.lessonCard}>
+          <View style={styles.lessonHeader}>
+            <Badge label={`${t('lesson')} ${current.lessonNumber}/${current.totalLessons}`} variant="emerald" />
+            {current.isComplete && <Badge label={t('completed')} variant="gold" />}
           </View>
 
-          <Text style={{ color: '#e8f5e9', fontSize: 20, fontWeight: 'bold', marginBottom: 4 }}>{current.title}</Text>
-          <Text style={{ color: 'rgba(251,191,36,0.8)', fontSize: 16, marginBottom: 16 }}>{current.titleAr}</Text>
+          <Text style={styles.lessonTitle}>{current.title}</Text>
+          <Text style={styles.lessonTitleAr}>{current.titleAr}</Text>
 
-          <Text style={{ color: '#e8f5e9', fontSize: 15, lineHeight: 24, marginBottom: 16 }}>{current.narration}</Text>
+          <Text style={styles.lessonNarration}>{current.narration}</Text>
 
-          <View style={{ backgroundColor: 'rgba(251,191,36,0.08)', borderColor: 'rgba(251,191,36,0.15)', borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 16 }}>
-            <Text style={{ color: '#fbbf24', fontSize: 12, fontWeight: '600', marginBottom: 4 }}>💡 {t('takeaway')}</Text>
-            <Text style={{ color: 'rgba(251,191,36,0.8)', fontSize: 14 }}>{current.takeaway}</Text>
+          {/* Takeaway */}
+          <View style={styles.takeawayCard}>
+            <View style={styles.takeawayLabelRow}>
+              <Lightbulb size={14} color={Colors.gold[400]} strokeWidth={2} />
+              <Text style={styles.takeawayLabel}>{t('takeaway')}</Text>
+            </View>
+            <Text style={styles.takeawayText}>{current.takeaway}</Text>
           </View>
 
+          {/* Complete Button */}
           {!current.isComplete && (
             <Pressable
               onPress={handleComplete}
-              style={{ backgroundColor: '#10b981', borderRadius: 14, paddingVertical: 14, alignItems: 'center' }}
+              style={({ pressed }) => [styles.completeButton, pressed && styles.buttonPressed]}
             >
-              <Text style={{ color: '#0a0f0d', fontSize: 16, fontWeight: 'bold' }}>{t('mark_complete')}</Text>
+              <Text style={styles.completeButtonText}>{t('mark_complete')}</Text>
             </Pressable>
           )}
         </View>
 
-        {/* Lesson Navigation */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 4 }}>
+        {/* ─── Navigation ─── */}
+        <View style={styles.navRow}>
           <Pressable
             onPress={() => setCurrentLessonIndex(Math.max(0, currentLessonIndex - 1))}
-            style={{ backgroundColor: 'rgba(6,78,59,0.4)', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}
+            style={({ pressed }) => [
+              styles.navButton,
+              currentLessonIndex <= 0 && styles.navButtonDisabled,
+              pressed && currentLessonIndex > 0 && styles.buttonPressed,
+            ]}
           >
-            <Text style={{ color: currentLessonIndex > 0 ? '#10b981' : 'rgba(167,196,176,0.3)', fontSize: 14 }}>← {t('previous')}</Text>
+            <Text style={[styles.navButtonText, currentLessonIndex <= 0 && styles.navButtonTextDisabled]}>
+              ← {t('previous')}
+            </Text>
           </Pressable>
           <Pressable
             onPress={() => setCurrentLessonIndex(Math.min(lessons.length - 1, currentLessonIndex + 1))}
-            style={{ backgroundColor: 'rgba(6,78,59,0.4)', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }}
+            style={({ pressed }) => [
+              styles.navButton,
+              currentLessonIndex >= lessons.length - 1 && styles.navButtonDisabled,
+              pressed && currentLessonIndex < lessons.length - 1 && styles.buttonPressed,
+            ]}
           >
-            <Text style={{ color: currentLessonIndex < lessons.length - 1 ? '#10b981' : 'rgba(167,196,176,0.3)', fontSize: 14 }}>{t('next')} →</Text>
+            <Text style={[styles.navButtonText, currentLessonIndex >= lessons.length - 1 && styles.navButtonTextDisabled]}>
+              {t('next')} →
+            </Text>
           </Pressable>
         </View>
       </ScrollView>
     </ScreenWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: Spacing['6xl'],
+  },
+  characterHero: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+    ...CardPresets.gold,
+    padding: Spacing['3xl'],
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  characterGlow: {
+    position: 'absolute' as const,
+    top: -40,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(212,168,67,0.04)',
+  },
+  characterArabic: {
+    ...Typography.arabicXl,
+    color: Colors.gold[400],
+    textAlign: 'center',
+  },
+  characterName: {
+    ...Typography.h4,
+    color: Colors.text.primary,
+    marginTop: Spacing.xs,
+    marginBottom: Spacing.lg,
+  },
+  characterProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    width: '70%',
+  },
+  characterProgressLabel: {
+    ...Typography.caption,
+    color: Colors.gold[400],
+    fontWeight: '600',
+  },
+  lessonCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+    ...CardPresets.primary,
+    padding: Spacing.xl,
+  },
+  lessonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  lessonTitle: {
+    ...Typography.h3,
+    color: Colors.text.primary,
+    marginBottom: Spacing.xs,
+  },
+  lessonTitleAr: {
+    ...Typography.arabicMd,
+    color: Colors.gold[400],
+    marginBottom: Spacing.lg,
+  },
+  lessonNarration: {
+    ...Typography.bodyLg,
+    color: Colors.text.secondary,
+    lineHeight: 26,
+    marginBottom: Spacing.xl,
+  },
+  takeawayCard: {
+    backgroundColor: 'rgba(212,168,67,0.08)',
+    borderWidth: 1,
+    borderColor: Colors.border.gold,
+    borderRadius: Radius.md,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  takeawayLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  takeawayLabel: {
+    ...Typography.caption,
+    color: Colors.gold[400],
+    fontWeight: '600',
+    marginBottom: Spacing.xs,
+  },
+  takeawayText: {
+    ...Typography.body,
+    color: Colors.gold[200],
+  },
+  completeButton: {
+    ...ButtonPresets.primary,
+  },
+  completeButtonText: {
+    ...Typography.h4,
+    color: Colors.text.inverse,
+  },
+  buttonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  navRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+  },
+  navButton: {
+    backgroundColor: Colors.bg.card,
+    borderWidth: 1,
+    borderColor: Colors.border.subtle,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.md,
+  },
+  navButtonDisabled: {
+    opacity: 0.4,
+  },
+  navButtonText: {
+    ...Typography.body,
+    color: Colors.emerald[400],
+    fontWeight: '600',
+  },
+  navButtonTextDisabled: {
+    color: Colors.text.muted,
+  },
+});

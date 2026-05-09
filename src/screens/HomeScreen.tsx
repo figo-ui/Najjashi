@@ -1,21 +1,38 @@
-import React, { useMemo } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import React, { useMemo, useEffect } from 'react';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { HandHeart, Fingerprint, BookOpen, ScrollText, BookOpenCheck, Hand, Sparkles } from 'lucide-react-native';
 import { useStore } from '../store/useStore';
-import { ScreenWrapper } from '../components/shared';
+import { ScreenWrapper, PremiumCard, Badge, ProgressBar, SectionHeader } from '../components/shared';
+import { Colors, Spacing, Radius, Typography, Shadows, CardPresets } from '../theme';
 import { getPrayerTimes } from '../services/prayerTimes';
 import { gregorianToHijri, formatHijriDate } from '../services/hijriCalendar';
 import { getAdhkarByTime, getSahabaLessons } from '../services/localData';
-import { buildRecommendationContext, generateRecommendations } from '../services/aiRecommendations';
+import { buildRecommendationContext, generateRecommendations, fetchDailyInsights, trainOnDailyActivity } from '../services/aiRecommendations';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+const QUICK_ACTION_ICONS: Record<string, React.ElementType> = {
+  adhkar: HandHeart,
+  tasbih: Fingerprint,
+  sahaba: BookOpen,
+};
+
+const AI_REC_ICONS: Record<string, React.ElementType> = {
+  adhkar: HandHeart,
+  sahaba: BookOpen,
+  hadith: ScrollText,
+  quran: BookOpenCheck,
+  dua: Hand,
+  tasbih: Fingerprint,
+};
+
 interface HomeScreenProps {
-  navigation: NativeStackNavigationProp<any>;
+  navigation: any;
 }
 
 export function HomeScreen({ navigation }: HomeScreenProps) {
   const { t } = useTranslation();
-  const { salahLog, preferences, recommendations, setRecommendations, sahabaLessons, currentLessonIndex, adhkarTime, zikrList, tasbihSessions } = useStore();
+  const { salahLog, preferences, recommendations, setRecommendations, sahabaLessons, currentLessonIndex, adhkarTime, zikrList, tasbihSessions, dailyHadith, setDailyHadith, dailyAyah, setDailyAyah } = useStore();
   const times = useMemo(() => getPrayerTimes(), []);
   const hijri = useMemo(() => gregorianToHijri(new Date()), []);
 
@@ -45,119 +62,405 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       currentLessonIndex,
       tasbihSessions,
       zikrList,
+      dailyHadith,
+      dailyAyah,
     });
     return generateRecommendations(ctx);
-  }, [salahLog, adhkarTime, lessons, currentLessonIndex, tasbihSessions, zikrList]);
+  }, [salahLog, adhkarTime, lessons, currentLessonIndex, tasbihSessions, zikrList, dailyHadith, dailyAyah]);
 
-  // Keep store in sync
   React.useEffect(() => {
     if (aiRecs.length > 0) setRecommendations(aiRecs);
   }, [aiRecs]);
 
-  return (
-    <ScreenWrapper title="نجاشي">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
-        {/* Prayer Card */}
-        <Pressable onPress={() => (navigation as any).navigate('Prayer')}>
-          <View style={{ backgroundColor: 'rgba(6,78,59,0.5)', borderColor: 'rgba(6,78,59,0.4)', borderWidth: 1, borderRadius: 20, padding: 20, marginBottom: 16 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ color: '#fbbf24', fontSize: 18, fontWeight: 'bold' }}>{t('prayer')}</Text>
-              <Text style={{ color: 'rgba(16,185,129,0.6)', fontSize: 12 }}>{preferences.locationCity}</Text>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View>
-                <Text style={{ color: '#e8f5e9', fontSize: 28, fontWeight: 'bold' }}>{times.nextPrayerTime}</Text>
-                <Text style={{ color: 'rgba(167,196,176,0.7)', fontSize: 14 }}>{t(times.nextPrayer)} — {times.timeRemaining}</Text>
-              </View>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={{ color: '#fbbf24', fontSize: 20, fontWeight: 'bold' }}>{completedCount}/5</Text>
-                <Text style={{ color: 'rgba(16,185,129,0.6)', fontSize: 11 }}>{t('completed')}</Text>
-              </View>
-            </View>
-            {/* Progress bar */}
-            <View style={{ marginTop: 12, height: 4, backgroundColor: 'rgba(16,185,129,0.2)', borderRadius: 2 }}>
-              <View style={{ height: 4, backgroundColor: '#10b981', borderRadius: 2, width: (completedCount / 5) * 280 }} />
-            </View>
-          </View>
-        </Pressable>
+  useEffect(() => {
+    if (dailyHadith && dailyAyah) return;
+    let mounted = true;
+    fetchDailyInsights().then(({ hadith, ayah }) => {
+      if (!mounted) return;
+      if (hadith) setDailyHadith(hadith);
+      if (ayah) setDailyAyah(ayah);
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
-        {/* Hijri Date */}
-        <View style={{ backgroundColor: 'rgba(6,78,59,0.3)', borderColor: 'rgba(6,78,59,0.3)', borderWidth: 1, borderRadius: 20, padding: 16, marginBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <View>
-            <Text style={{ color: 'rgba(167,196,176,0.6)', fontSize: 11 }}>{t('hijri_date')}</Text>
-            <Text style={{ color: '#e8f5e9', fontSize: 16, fontWeight: '600' }}>{formatHijriDate(hijri)}</Text>
+  useEffect(() => {
+    trainOnDailyActivity();
+  }, []);
+
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return t('morning_greeting') || 'Assalamu Alaykum';
+    if (hour < 17) return t('afternoon_greeting') || 'Assalamu Alaykum';
+    return t('evening_greeting') || 'Assalamu Alaykum';
+  }, []);
+
+  return (
+    <ScreenWrapper>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {/* ─── Greeting & Date ─── */}
+        <View style={styles.greetingSection}>
+          <Text style={styles.greetingText}>{greeting}</Text>
+          <View style={styles.dateRow}>
+            <View>
+              <Text style={styles.dateLabel}>{t('hijri_date')}</Text>
+              <Text style={styles.dateValue}>{formatHijriDate(hijri)}</Text>
+            </View>
+            <Text style={styles.dateArabic}>{hijri.monthNameAr}</Text>
           </View>
-          <Text style={{ color: 'rgba(251,191,36,0.8)', fontSize: 18 }}>{hijri.monthNameAr}</Text>
         </View>
 
-        {/* Adhkar Recommendation */}
-        <Pressable onPress={() => (navigation as any).navigate('Adhkar')}>
-          <View style={{ backgroundColor: 'rgba(6,78,59,0.4)', borderColor: 'rgba(6,78,59,0.35)', borderWidth: 1, borderRadius: 20, padding: 18, marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Text style={{ color: '#10b981', fontSize: 14, fontWeight: '600' }}>📿 {t(`${currentAdhkar}_adhkar`)}</Text>
-              <Text style={{ color: 'rgba(167,196,176,0.5)', fontSize: 12 }}>{adhkarCompleted}/{adhkarItems.length}</Text>
+        {/* ─── Hero Prayer Card ─── */}
+        <Pressable onPress={() => (navigation as any).navigate('Prayer')}>
+          <View style={styles.prayerHero}>
+            {/* Ambient glow */}
+            <View style={styles.prayerGlow} />
+            <View style={styles.prayerHeroContent}>
+              <View style={styles.prayerHeroTop}>
+                <Badge label={t(times.nextPrayer)} variant="gold" />
+                <Text style={styles.prayerLocation}>{preferences.locationCity}</Text>
+              </View>
+              <Text style={styles.prayerTime}>{times.nextPrayerTime}</Text>
+              <Text style={styles.prayerRemaining}>{times.timeRemaining}</Text>
+              <View style={styles.prayerProgressRow}>
+                <ProgressBar progress={completedCount / 5} variant="gold" height={3} />
+                <Text style={styles.prayerCount}>{completedCount}/5</Text>
+              </View>
             </View>
-            <Text style={{ color: 'rgba(167,196,176,0.7)', fontSize: 13 }}>{t('adhkar_recommendation')}</Text>
           </View>
         </Pressable>
 
-        {/* Sahaba Lesson */}
+        {/* ─── Quick Actions Row ─── */}
+        <View style={styles.quickActions}>
+          <Pressable style={styles.quickAction} onPress={() => (navigation as any).navigate('Adhkar')}>
+            <View style={styles.quickActionCircle}>
+              {(() => { const I = QUICK_ACTION_ICONS.adhkar; return <I size={22} color={Colors.emerald[400]} strokeWidth={1.8} />; })()}
+            </View>
+            <Text style={styles.quickActionLabel}>{t(`${currentAdhkar}_adhkar`)}</Text>
+            <Text style={styles.quickActionSub}>{adhkarCompleted}/{adhkarItems.length}</Text>
+          </Pressable>
+          <Pressable style={styles.quickAction} onPress={() => (navigation as any).navigate('Tasbih')}>
+            <View style={styles.quickActionCircle}>
+              {(() => { const I = QUICK_ACTION_ICONS.tasbih; return <I size={22} color={Colors.emerald[400]} strokeWidth={1.8} />; })()}
+            </View>
+            <Text style={styles.quickActionLabel}>{t('tasbih')}</Text>
+            <Text style={styles.quickActionSub}>سُبْحَانَ ٱللَّهِ</Text>
+          </Pressable>
+          <Pressable style={styles.quickAction} onPress={() => (navigation as any).navigate('Sahaba')}>
+            <View style={styles.quickActionCircle}>
+              {(() => { const I = QUICK_ACTION_ICONS.sahaba; return <I size={22} color={Colors.emerald[400]} strokeWidth={1.8} />; })()}
+            </View>
+            <Text style={styles.quickActionLabel}>{nextLesson.characterName}</Text>
+            <Text style={styles.quickActionSub}>{nextLesson.lessonNumber}/{nextLesson.totalLessons}</Text>
+          </Pressable>
+        </View>
+
+        {/* ─── Sahaba Story Card ─── */}
         <Pressable onPress={() => (navigation as any).navigate('Sahaba')}>
-          <View style={{ backgroundColor: 'rgba(6,78,59,0.4)', borderColor: 'rgba(6,78,59,0.35)', borderWidth: 1, borderRadius: 20, padding: 18, marginBottom: 12 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Text style={{ color: '#10b981', fontSize: 14, fontWeight: '600' }}>📖 {nextLesson.characterName}</Text>
-              <Text style={{ color: 'rgba(167,196,176,0.5)', fontSize: 12 }}>{nextLesson.lessonNumber}/{nextLesson.totalLessons}</Text>
+          <View style={styles.storyCard}>
+            <View style={styles.storyCardHeader}>
+              <Text style={styles.storyCardTitle}>{nextLesson.title}</Text>
+              <Badge label={`${nextLesson.lessonNumber}/${nextLesson.totalLessons}`} variant="emerald" />
             </View>
-            <Text style={{ color: '#e8f5e9', fontSize: 15, fontWeight: '500', marginBottom: 4 }}>{nextLesson.title}</Text>
-            <Text style={{ color: 'rgba(167,196,176,0.6)', fontSize: 12 }} numberOfLines={2}>{nextLesson.narration}</Text>
+            <Text style={styles.storyCardNarration} numberOfLines={2}>{nextLesson.narration}</Text>
+            <View style={styles.storyCardFooter}>
+              <Text style={styles.storyCardCta}>{t('continue_journey') || 'Continue Journey'}</Text>
+              <Text style={styles.storyCardArrow}>→</Text>
+            </View>
           </View>
         </Pressable>
 
-        {/* Tasbih Quick Access */}
-        <Pressable onPress={() => (navigation as any).navigate('Tasbih')}>
-          <View style={{ backgroundColor: 'rgba(6,78,59,0.3)', borderColor: 'rgba(6,78,59,0.3)', borderWidth: 1, borderRadius: 20, padding: 18, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <View>
-              <Text style={{ color: '#10b981', fontSize: 14, fontWeight: '600' }}>✋ {t('tasbih')}</Text>
-              <Text style={{ color: 'rgba(167,196,176,0.6)', fontSize: 12 }}>{t('tasbih_prompt')}</Text>
+        {/* ─── Daily Inspiration ─── */}
+        {dailyAyah && (
+          <Pressable onPress={() => (navigation as any).navigate('QuranTab')}>
+            <View style={styles.inspirationCard}>
+              <Text style={styles.inspirationLabel}>Quran of the Day</Text>
+              <Text style={styles.inspirationArabic}>{dailyAyah.arabic}</Text>
+              <Text style={styles.inspirationTranslation} numberOfLines={3}>{dailyAyah.translation}</Text>
+              <Text style={styles.inspirationRef}>{dailyAyah.surahName} {dailyAyah.ayahNumber}</Text>
             </View>
-            <Text style={{ color: '#fbbf24', fontSize: 24, fontWeight: 'bold' }}>سُبْحَانَ اللَّهِ</Text>
-          </View>
-        </Pressable>
+          </Pressable>
+        )}
 
-        {/* AI Recommendations */}
+        {dailyHadith && (
+          <Pressable onPress={() => (navigation as any).navigate('HadithDetail', { hadithId: dailyHadith.id, collection: dailyHadith.collection, hadithNumber: dailyHadith.hadithNumber })}>
+            <View style={styles.inspirationCard}>
+              <Text style={styles.inspirationLabel}>Hadith of the Day</Text>
+              {dailyHadith.arabic && (
+                <Text style={styles.inspirationArabic}>{dailyHadith.arabic.replace(/<[^>]*>/g, '')}</Text>
+              )}
+              <Text style={styles.inspirationTranslation} numberOfLines={3}>{dailyHadith.english.replace(/<[^>]*>/g, '')}</Text>
+              {dailyHadith.grades.length > 0 && (
+                <Text style={styles.inspirationGrade}>{dailyHadith.grades[0].grade} — {dailyHadith.grades[0].graded_by}</Text>
+              )}
+            </View>
+          </Pressable>
+        )}
+
+        {/* ─── AI Suggestions ─── */}
         {aiRecs.length > 0 && (
-          <View style={{ marginBottom: 12 }}>
-            <Text style={{ color: 'rgba(16,185,129,0.6)', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>
-              {t('recommended')}
-            </Text>
+          <View style={styles.aiSection}>
+            <SectionHeader title={t('recommended')} />
             {aiRecs.slice(0, 3).map((rec) => {
-              const icon = rec.type === 'adhkar' ? '📿' : rec.type === 'sahaba' ? '📖' : '✋';
-              const target = rec.type === 'adhkar' ? 'Adhkar' : rec.type === 'sahaba' ? 'Sahaba' : 'Tasbih';
+              const RecIcon = AI_REC_ICONS[rec.type] || Sparkles;
+              const target = rec.type === 'adhkar' ? 'Adhkar' : rec.type === 'sahaba' ? 'Sahaba' : rec.type === 'hadith' ? 'HadithDetail' : rec.type === 'quran' ? 'QuranTab' : rec.type === 'dua' ? 'HisnulMuslim' : 'Tasbih';
               return (
                 <Pressable
                   key={rec.id}
                   onPress={() => (navigation as any).navigate(target)}
-                  style={{ backgroundColor: 'rgba(6,78,59,0.3)', borderWidth: 1, borderColor: 'rgba(6,78,59,0.3)', borderRadius: 14, padding: 14, marginBottom: 8 }}
+                  style={({ pressed }) => [styles.aiCard, pressed && styles.aiCardPressed]}
                 >
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ color: '#e8f5e9', fontSize: 14, fontWeight: '600' }}>{icon} {rec.title}</Text>
-                      <Text style={{ color: 'rgba(167,196,176,0.5)', fontSize: 11, marginTop: 2 }}>{rec.reason}</Text>
-                    </View>
+                  <View style={styles.aiCardIconWrap}>
+                    <RecIcon size={18} color={Colors.emerald[400]} strokeWidth={2} />
+                  </View>
+                  <View style={styles.aiCardContent}>
+                    <Text style={styles.aiCardTitle}>{rec.title}</Text>
+                    <Text style={styles.aiCardReason} numberOfLines={1}>{rec.reason}</Text>
                   </View>
                 </Pressable>
               );
             })}
           </View>
         )}
-
-        {/* Settings */}
-        <Pressable onPress={() => (navigation as any).navigate('Settings')}>
-          <View style={{ padding: 12, alignItems: 'center' }}>
-            <Text style={{ color: 'rgba(167,196,176,0.4)', fontSize: 12 }}>⚙ {t('settings')}</Text>
-          </View>
-        </Pressable>
       </ScrollView>
     </ScreenWrapper>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: Spacing['6xl'],
+  },
+  greetingSection: {
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing['3xl'],
+    paddingBottom: Spacing.lg,
+  },
+  greetingText: {
+    ...Typography.h2,
+    color: Colors.text.primary,
+    marginBottom: Spacing.md,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: Colors.bg.card,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderWidth: 1,
+    borderColor: Colors.border.subtle,
+  },
+  dateLabel: {
+    ...Typography.overline,
+    color: Colors.text.tertiary,
+    marginBottom: 2,
+  },
+  dateValue: {
+    ...Typography.body,
+    color: Colors.text.primary,
+    fontWeight: '600',
+  },
+  dateArabic: {
+    ...Typography.arabicMd,
+    color: Colors.gold[400],
+  },
+  prayerHero: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderRadius: Radius.xl,
+    backgroundColor: Colors.emerald[900],
+    borderWidth: 1,
+    borderColor: Colors.border.active,
+    overflow: 'hidden',
+    ...Shadows.glow,
+  },
+  prayerGlow: {
+    position: 'absolute' as const,
+    top: -40,
+    right: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: 'rgba(16,185,129,0.08)',
+  },
+  prayerHeroContent: {
+    padding: Spacing.xl,
+  },
+  prayerHeroTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.lg,
+  },
+  prayerLocation: {
+    ...Typography.caption,
+    color: Colors.text.tertiary,
+  },
+  prayerTime: {
+    fontSize: 48,
+    fontWeight: '300',
+    lineHeight: 56,
+    fontVariant: ['tabular-nums'],
+    color: Colors.text.primary,
+    marginBottom: 2,
+  },
+  prayerRemaining: {
+    ...Typography.bodyLg,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.lg,
+  },
+  prayerProgressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  prayerCount: {
+    ...Typography.caption,
+    color: Colors.gold[400],
+    fontWeight: '600',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.xl,
+  },
+  quickAction: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quickActionCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.bg.card,
+    borderWidth: 1,
+    borderColor: Colors.border.subtle,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+    ...Shadows.sm,
+  },
+  quickActionLabel: {
+    ...Typography.caption,
+    color: Colors.text.primary,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  quickActionSub: {
+    ...Typography.overline,
+    color: Colors.text.tertiary,
+    fontSize: 9,
+    marginTop: 1,
+    textAlign: 'center',
+  },
+  storyCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    ...CardPresets.gold,
+    padding: Spacing.xl,
+  },
+  storyCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: Spacing.sm,
+  },
+  storyCardTitle: {
+    ...Typography.h4,
+    color: Colors.text.primary,
+    flex: 1,
+    marginRight: Spacing.md,
+  },
+  storyCardNarration: {
+    ...Typography.body,
+    color: Colors.text.secondary,
+    marginBottom: Spacing.lg,
+  },
+  storyCardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  storyCardCta: {
+    ...Typography.caption,
+    color: Colors.gold[400],
+    fontWeight: '600',
+  },
+  storyCardArrow: {
+    ...Typography.body,
+    color: Colors.gold[400],
+  },
+  inspirationCard: {
+    marginHorizontal: Spacing.lg,
+    marginBottom: Spacing.lg,
+    ...CardPresets.primary,
+    padding: Spacing.xl,
+  },
+  inspirationLabel: {
+    ...Typography.overline,
+    color: Colors.text.tertiary,
+    marginBottom: Spacing.md,
+  },
+  inspirationArabic: {
+    ...Typography.arabicMd,
+    color: Colors.text.arabic,
+    textAlign: 'center',
+    marginBottom: Spacing.md,
+  },
+  inspirationTranslation: {
+    ...Typography.body,
+    color: Colors.text.secondary,
+    lineHeight: 22,
+  },
+  inspirationRef: {
+    ...Typography.caption,
+    color: Colors.emerald[400],
+    marginTop: Spacing.sm,
+  },
+  inspirationGrade: {
+    ...Typography.overline,
+    color: Colors.text.muted,
+    marginTop: Spacing.sm,
+  },
+  aiSection: {
+    paddingHorizontal: Spacing.lg,
+  },
+  aiCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.bg.card,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Colors.border.subtle,
+    padding: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  aiCardPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+  aiCardIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(16,185,129,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  aiCardContent: {
+    flex: 1,
+  },
+  aiCardTitle: {
+    ...Typography.body,
+    color: Colors.text.primary,
+    fontWeight: '600',
+  },
+  aiCardReason: {
+    ...Typography.caption,
+    color: Colors.text.tertiary,
+    marginTop: 1,
+  },
+});
